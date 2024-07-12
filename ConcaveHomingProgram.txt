@@ -1,0 +1,267 @@
+
+
+MODULE ConvexHomingProgram
+	
+
+    CONST speeddata Medium:=v100;
+
+    VAR robtarget pathLvl3Targets{numLvl3Targets};
+    CONST num numLvl3Targets:=9;
+
+	 
+
+
+PROC getToolPosition()
+
+	VAR robtarget ToolRobtarget;
+	VAR pos ToolPos;
+
+	ToolPosition:=CRobT(\Tool:=tool0\WObj:=wobj0);
+        ToolPos:=ToolRobtarget.trans;
+ENDPROC
+
+PROC createPath()
+	VAR pos := Lvl1_Vector_Pos;
+        VAR pos := Lvl2_Vector_Pos;
+
+	IF ToolPos.y>RefTargetPos.y AND ToolPos.z<RefTargetPos.z
+		TPWRITE "Tool on Left Side, Bottom";
+		pathBegin :=2;
+        
+		Lvl1_Vector_Pos := BL_L1_Pos;
+		Lvl2_Vector_Pos :=BL_L2_Pos;
+
+		
+	ELSE IF ToolPos.y>RefTargetPos.y AND ToolPos.z>=RefTargetPos.z
+                TPWRITE "Tool on Left Side, Top";
+                pathBegin:=4;
+		Lvl1_Vector_Pos :=TL_L1_Pos;
+		Lvl2_Vector_Pos :=TL_L2_Pos;
+                
+		
+	ELSE IF ToolPos.y<=RefTargetPos.y AND ToolPos.z<RefTargetPos.z
+		TPWRITE "Tool on Right Side, Top";
+		pathBegin:=6;
+                Lvl1_Vector_Pos :=TR_L1_Pos;
+		Lvl2_Vector_Pos :=TR_L2_Pos;
+		
+	ELSE
+		TPWRITE "Tool on Right Side, Bottom";
+		pathBegin:=8;
+		Lvl1_Vector_Pos :=BR_L1_Pos;
+		Lvl2_Vector_Pos :=BR_L2_Pos;
+ENDPROC
+
+PROC createTargetLvl1()
+	VAR num XOffset_Lvl1;
+	VAR num YOffset_Lvl1;
+	VAR num ZOffset_Lvl1;
+
+	XOffset_Lvl1 := ((ToolPos.x+Lvl1_Vector_Pos.x)/2)
+	YOffset_Lvl1 := ((ToolPos.y+Lvl1_Vector_Pos.y)/2)
+	ZOffset_Lvl1 := ((ToolPos.z+Lvl1_Vector_Pos.z)/2)
+	
+	Target_Lvl1 := Offs(ToolPosition,XOffset_Lvl1,YOffset_Lvl1,ZOffset_Lvl1);  
+ENDPROC
+
+PROC createTargetLvl2()
+	VAR num XOffset_Lvl2;
+	VAR num YOffset_Lvl2;
+	VAR num ZOffset_Lvl2;
+
+	XOffset_Lvl2 := ((ToolPos.x+Lvl2_Vector_Pos.x)/2)
+	YOffset_Lvl2 := ((ToolPos.y+Lvl2_Vector_Pos.y)/2)
+	ZOffset_Lvl2 := ((ToolPos.z+Lvl2_Vector_Pos.z)/2)
+	
+	Target_Lvl2 := Offs(ToolPosition,XOffset_Lvl2,YOffset_Lvl2,ZOffset_Lvl2);  
+ENDPROC
+
+
+
+PROC path_Out_Pt1()
+	MoveL Target_Lvl1,Medium,z200,tool0\WObj:=wobj0;
+	MoveL Target_Lvl2,Medium,z200,tool0\WObj:=wobj0;
+ENDPROC
+
+PROC Path_Out_Pt2()
+	endTarget:=pathLvl3Targets{RouteAssignedEnd};
+
+	!Right to Left!	
+        IF pathBegin<pathEnd THEN
+            targetOnPath:=pathBegin;
+            WHILE targetOnPath<=pathEnd DO
+                MoveL pathTargets{targetOnPath},Medium,z100,tool0\WObj:=wobj0;
+		pathTargets:=pathTargets+1;
+            ENDWHILE
+
+        !Right to Left!
+        ELSE
+            targetOnPath:=pathBegin;
+            WHILE targetOnPath>=pathEnd DO
+                MoveL pathTargets{targetOnPath},Medium,z100,tool0\WObj:=wobj0;
+                pathTargetse:=pathTargets-1;
+            ENDWHILE
+
+        ENDIF
+
+ENDPROC
+
+PROC runPath()
+	Path_Out_Pt1;
+	Path_Out_Pt2;
+ENDPROC
+
+
+
+
+
+
+! ------------------------Begin-Old_VARiables---------------------------!
+    VAR robtarget ToolRobtarget;
+    VAR pos ToolPos;
+
+    VAR pos LeftHomePos;
+    VAR pos RightHomePos;
+
+    VAR pos L_Home_Off_Pos;
+    VAR pos R_Home_Off_Pos;
+
+    VAR robtarget LeftHomeOffset;
+    VAR robtarget RightHomeOffset;
+
+    VAR pos EndTargetPos;
+
+    VAR pos RefTargetPos:=RefTarget.trans;
+
+ 
+    VAR num waypointEnroute;
+
+    !These are chosen evertime in the whereToEndRoute Proc
+    VAR num rtAsgndBegin;
+    VAR num routeAssignedEnd;
+
+
+    Var robtarget EndTarget;
+
+   ! ------------------------END-OLD-VARiables---------------------------! 
+
+! ------------------------Begin-New-VARiables---------------------------!
+
+ 	!------------------  Robtarget Pos's ------------!
+	CONST pos BL_L1_Pos := {1393.0, 1907.954069, 3173.608762};
+	CONST pos TL_L1_Pos :={1393.0, -2354.957862, 3173.608762};
+	CONST pos TR_L1_Pos := {1393.0, -2354.957862, 0.02848};
+	CONST pos  BR_L1_Pos :={1393.0, 1907.954069, 0.02848};
+	CONST pos BL_L2_Pos :={1594.386861, 1031.905343, 2561.746097};
+	CONST pos TL_L2_Pos :={1594.320781, -1264.550623, 2593.63027};
+	CONST pos TR_L2_Pos :={1589.319724, -1279.091608, 1006.840129};
+	CONST pos BR_L2_Pos :={1589.385804, 1017.364357, 974.955956};
+	!------------------  Robtarget Pos's End ------------!
+
+	!------------------  Joint Target Pos's ------------!
+	CONST pos L_Home_Pos :={-812.0, 2072.954069, 0.02848};
+	CONST pos BL_L3_Pos :={183.0, 2072.954069, 0.02848};
+	CONST pos CL_L3_Pos :={183.0, 2072.954069, 3173.608762};
+	CONST pos TL_L3_Pos :={1351.0, -9.143384, 3714.608762};
+	CONST pos Top_L3_Pos :={183.0, -2519.957862, 3173.608762};
+	CONST pos TR_L3_Pos :={183.0, -2519.957862, 0.02848};
+	CONST pos CR_L3_Pos :={-812.0, -2519.957862, 0.02848};
+	CONST pos BR_L3_Pos :={183.0, 2613.954069, 1586.818621};
+	CONST pos R_Home_L3_Pos :={183.0, -3060.957862, 1586.818621};
+	!------------------  Joint Target Pos's End ------------!
+
+	!------------------  Robtargets ------------!
+	!NEED JOINT ANGLES AND OTHER INFORMATION!
+	!CONST robtarget EXAMPLE:=[[589.15,-232.43,1750],[0.573092,0.594807,0.417225,0.37907],[-1,2,-2,1],[9E+09,9E+09,9E+09,9E+09,9E+09,9E+09]];
+	!Have to get the last three [] out of the above!
+
+	CONST robtarget BL_L1 :=[[BL_L1_Pos ], 
+	CONST robtarget TL_L1 :=[[TL_L1_Pos ],
+	CONST robtarget TR_L1 :=[[TR_L1_Pos ],
+	CONST robtarget BR_L1 :=[[BR_L1_Pos ],
+	CONST robtarget BL_L2 :=[[BL_L2_Pos ],
+	CONST robtarget TL_L2 :=[[TL_L2_Pos ],
+	CONST robtarget TR_L2 :=[[TR_L2_Pos ],
+	CONST robtarget BR_L2 :=[[BR_L2_Pos ],
+
+	CONST robtarget L_Home :={-812.0, 2072.954069, 0.02848};
+	CONST robtarget BL_L3 :={183.0, 2072.954069, 0.02848};
+	CONST robtarget CL_L3 :={183.0, 2072.954069, 3173.608762};
+	CONST robtarget TL_L3 :={1351.0, -9.143384, 3714.608762};
+	CONST robtarget Top_L3 :={183.0, -2519.957862, 3173.608762};
+	CONST robtarget TR_L3 :={183.0, -2519.957862, 0.02848};
+	CONST robtarget CR_L3 :={-812.0, -2519.957862, 0.02848};
+	CONST robtarget BR_L3 :={183.0, 2613.954069, 1586.818621};
+	CONST robtarget R_Home_L3 :={183.0, -3060.957862, 1586.818621};
+
+	!-------------------- Robtargets-End-------------------!
+
+	!------ Variables are for TPReadFK Home -------!
+   	VAR num i;
+	VAR num routeAssignedEnd;
+  	VAR num Which_Home:=-1;
+    	VAR string Home_Answer:="";
+	!------ End Variables for TPReadFK Home -------!
+
+
+! ------------------------END-New-VARiables---------------------------!
+
+!--------------------------MAIN!----------------------------------!
+    PROC Main()
+
+        pathLvl3Targets{1}:= L_Home;
+        pathLvl3Targets{2}:= BL_L3;
+        pathLvl3Targets{3}:= CL_L3:
+        pathLvl3Targets{4}:= TL_L3:
+        pathLvl3Targets{5}:= Top_L3;
+        pathLvl3Targets{6}:= TR_L3;
+        pathLvl3Targets{7}:= CR_L3;
+        pathLvl3Targets{8}:= BR_L3;
+        pathLvl3Targets{9}:= R_Home;
+
+	
+        TPReadFK Home,"Where do you want to move the tool?","Left Home","","","","Right Home";
+        IF Home=1 THEN
+            Home_Answer:="the tool will go to Left Home";
+            RouteAssignedEnd:=1;
+            
+        ELSE
+            Hm_or_Plt_Rsp:="the tool will go to Right Home";
+            routeAssignedEnd:=9;
+
+        ENDIF
+
+	getToolPosition;
+	createPath;
+	createTargetLvl1;
+	createTargetLvl2;
+	runPath;
+
+    ENDPROC
+
+    !These Below are all error finding devices...
+    PROC wrtEndORtTarg()
+        TPWrite "End of Route Target = "+ValToStr(routeAssignedEnd);
+    EndProc
+
+    PROC wrtRtAsgndBegin()
+        TPWrite " Val`rtAsgndBegin' in 'rtBeginCalc' = "+ValToStr(rtAsgndBegin);
+    EndProc
+
+    PROC wrtChkAssBgn()
+        TPWrite "Val `rtAsgndBegin' in `rtToHmLoR' = "+ValToStr(rtAsgndBegin);
+    EndProc
+
+    PROC wrtBgnORt()
+        TPWrite "Val `beginningOfRoute' in `rtToHmLoR' = "+ValToStr(rtAsgndBegin);
+    EndProc
+
+    PROC wrtWyPtEnRt()
+        TPWrite "Next Target Location Enroute = "+ValToStr(waypointEnroute);
+    ENDPROC
+
+    PROC wrtRchdWyPt()
+        TPWrite "Reached Location Enroute = "+ValToStr(waypointEnroute);
+    EndProc
+
+ENDMODULE
